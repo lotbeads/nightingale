@@ -30,7 +30,7 @@ backend:
     enabled: true
     name: "tsdb"
     cluster:
-      tsdb01: 127.0.0.1:8011
+      tsdb01: 192.168.56.101:8011
   influxdb:
     enabled: false
     username: "influx"

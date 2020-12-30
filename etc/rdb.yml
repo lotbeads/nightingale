@@ -52,7 +52,7 @@ ldap:
 # as queue for sender
 redis:
   enable: true
-  addr: 127.0.0.1:6379
+  addr: 192.168.56.101:6379
   pass: ""
   idle: 5
   timeout:

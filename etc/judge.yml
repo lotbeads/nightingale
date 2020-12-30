@@ -5,7 +5,7 @@ query:
  
 redis:
   addrs: 
-    - 127.0.0.1:6379
+    - 192.168.56.101:6379
   pass: ""
   # timeout:
   #   conn: 500
