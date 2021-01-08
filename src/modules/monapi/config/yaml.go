@@ -29,6 +29,7 @@ type ConfYaml struct {
 	Link          linkSection         `yaml:"link"`
 	IndexMod      string              `yaml:"indexMod"`
 	I18n          i18n.I18nSection    `yaml:"i18n"`
+	Opencloud	  opencloudSection	  `yaml:"opencloud"`
 }
 
 type mergeSection struct {
@@ -65,6 +66,11 @@ type redisSection struct {
 	Pass    string         `yaml:"pass"`
 	Idle    int            `yaml:"idle"`
 	Timeout timeoutSection `yaml:"timeout"`
+}
+
+type opencloudSection struct {
+	Enable  bool	`yaml:"enable"`
+	Stra     string  `yaml:"stra"`
 }
 
 type timeoutSection struct {

@@ -1,6 +1,11 @@
 package scache
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/didi/nightingale/src/modules/monapi/config"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -8,6 +13,12 @@ import (
 
 	"github.com/toolkits/pkg/logger"
 )
+
+type OCStraResult struct {
+	ErrCode int    `json:"code"`
+	ErrMsg  string `json:"msg"`
+	Data	[]*models.Stra `json:"data"`
+}
 
 func SyncStras() {
 	t1 := time.NewTicker(time.Duration(CHECK_INTERVAL) * time.Second)
@@ -90,6 +101,39 @@ func syncStras() {
 			strasMap[node] = []*models.Stra{stra}
 		}
 	}
+
+	//拉取opencloud策略
+	cfg := config.Get()
+	if cfg.Opencloud.Enable {
+		url := cfg.Opencloud.Stra
+		ocstras, err := jsonOCStraGet(url)
+		if err != nil {
+			logger.Error(fmt.Errorf("get opencloud stras failed: %s", err))
+			fmt.Println(fmt.Errorf("get opencloud stras failed: %s", err))
+		} else {
+			logger.Info("get opencloud stras successfully")
+			fmt.Println("get opencloud stras successfully")
+			for _, stra := range ocstras {
+				node, err := JudgeHashRing.GetNode("oc" + strconv.FormatInt(stra.Id, 10))
+				if err != nil {
+					logger.Warningf("get oc node err:%v %v", err, stra)
+					fmt.Printf("get oc node err:%v %v", err, stra)
+					continue
+				}
+				// 补充时区
+				loc := time.Local
+				stra.Created = stra.Created.In(loc)
+				stra.LastUpdated = stra.LastUpdated.In(loc)
+
+				if _, exists := strasMap[node]; exists {
+					strasMap[node] = append(strasMap[node], stra)
+				} else {
+					strasMap[node] = []*models.Stra{stra}
+				}
+			}
+		}
+	}
+
 	StraCache.SetAll(strasMap)
 }
 
@@ -123,4 +167,37 @@ func cleanStra() {
 			}
 		}
 	}
+}
+
+
+func jsonOCStraGet(url string) ([]*models.Stra, error) {
+	r, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	if r.Body == nil {
+		return nil, fmt.Errorf("response body of %s is nil", url)
+	}
+
+	defer r.Body.Close()
+
+	resp, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read req body err: %v", err)
+	}
+
+	result := OCStraResult{}
+
+	err = json.Unmarshal(resp, &result)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal resp content err: %v", err)
+	}
+
+	if result.ErrCode != 0 {
+		err = fmt.Errorf("req return ErrCode = %d ErrMsg = %s", result.ErrCode, result.ErrMsg)
+		return nil, err
+	}
+
+	return result.Data, nil
 }

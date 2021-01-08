@@ -37,6 +37,7 @@ type Stra struct {
 	AlertUpgradeStr     string    `xorm:"alert_upgrade" json:"-"`
 	WorkGroupsStr       string    `xorm:"work_groups" json:"-"`
 	Runbook             string    `xorm:"runbook" json:"runbook"`
+	Opencloud			int		  `xorm:"-" json:"opencloud"`
 
 	ExclNid          []int64      `xorm:"-" json:"excl_nid"`
 	Nids             []string     `xorm:"-" json:"nids"`
